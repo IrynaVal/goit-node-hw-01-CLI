@@ -1,46 +1,47 @@
 const fs = require("fs/promises");
 const path = require("path");
+const { nanoid } = require("nanoid");
 
-const contactsPath = path.join(__dirname, "contacts.json");
+const contactsPath = path.join(__dirname, "db", "contacts.json");
 
-// const invokeAction = async ({action, id, name,email,phone}) => {
-//     switch (action) {
-//         case 'read':
-//             const allContacts = await contacts.getAll();
-//             return console.log(allContacts);
-// case "getById":
-// const oneContact = await contacts.getContactById(contactId);
-// return console.log(oneContact);
-//     }
-// }
-// invokeAction({ action: "read" });
-// invokeAction({ action: "getById", id: "AeHIrLTr6JkxGE6SN-0Rw" })
-
-// TODO: задокументувати кожну функцію
-function listContacts() {
-  // ...твій код
-    const data = fs.readFile(contactsPath);
+async function listContacts() {
+  const data = await fs.readFile(contactsPath);
   return JSON.parse(data);
 }
 
-function getContactById(contactId) {
-  // ...твій код
-    const contacts = listContacts();
-    const result = contacts.find(contact => contact.id === contactId);
-    return result || null;
+async function getContactById(contactId) {
+  const contacts = await listContacts();
+  const result = contacts.find((contact) => contact.id === contactId);
+  return result || null;
 }
 
-function removeContact(contactId) {
-  // ...твій код
+async function removeContact(contactId) {
+  const contacts = await listContacts();
+  const index = contacts.findIndex((contact) => contact.id === contactId);
+  if (index === -1) {
+    return null;
+  }
+  const [result] = contacts.splice(index, 1);
+  await fs.writeFile(contactsPath, JSON.stringify(contacts, null, 2));
+  return result;
 }
 
-function addContact(name, email, phone) {
-  // ...твій код
+async function addContact(name, email, phone) {
+  const contacts = await listContacts();
+  const newContact = {
+    id: nanoid(),
+    name,
+    email,
+    phone,
+  };
+  contacts.push(newContact);
+  await fs.writeFile(contactsPath, JSON.stringify(contacts, null, 2));
+  return newContact;
 }
 
-module.exports {
-    listContacts,
-        getContactById,
-        removeContact,
-        addContact
-}
+module.exports = {
+  listContacts,
+  getContactById,
+  removeContact,
+  addContact,
+};
